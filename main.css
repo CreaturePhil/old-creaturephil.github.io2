@@ -9,6 +9,11 @@ a {
   text-decoration: none;
 }
 
+h4 {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 1.2em;
+}
+
 .site-header {
   text-transform: uppercase;
   border-top: 5px solid #333;
@@ -93,6 +98,55 @@ a {
   line-height: 24px;
   margin-top: 7px;
   margin-bottom: 0;
+}
+
+.site-post {
+  margin: 2rem auto;
+  max-width: 768px;
+}
+
+.post-date {
+  color: #777;
+  font-weight: 700;
+  font-size: 0.8em;
+  margin-bottom: 0.5em;
+}
+
+.post-title {
+  margin: 0;
+  font-family: 'Libre Baskerville', serif;
+}
+
+.post-link {
+  color: #0074D9;
+  border-bottom: 2px solid rgba(0, 116, 217, 0.19);
+  -webkit-transition: border-color 0.2s ease;
+  -moz-transition: border-color 0.2s ease;
+  -ms-transition: border-color 0.2s ease;
+  -o-transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease
+}
+
+.post-link:hover {
+  border-bottom: 2px solid #0074D9;
+}
+
+@media only screen and (max-width: 767px) {
+  img {
+    max-width: 92vw;
+  }
+}
+
+@media only screen and (min-width: 768px) and (max-width: 1024px) {
+  img {
+    max-width: 92vw;
+  }
+}
+
+@media only screen and (min-width: 1025px) {
+  img {
+    max-width: 768px;
+  }
 }
 
 @media print{
