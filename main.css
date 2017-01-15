@@ -43,6 +43,25 @@ body {
   text-decoration: underline;
 }
 
+.site-hero {
+  position: relative;
+  height: 50vh;
+  background-position: center center;
+}
+
+.site-intro {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 1em auto;
+  max-width: 40rem;
+  color: #fff;
+  font-size: 1.1em;
+  font-family: sans-serif;
+  font-weight: 100;
+}
+
 @media print{
   body{
     max-width: none;
