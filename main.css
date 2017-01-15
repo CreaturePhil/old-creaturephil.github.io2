@@ -1,0 +1,50 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Open Sans', sans-serif;
+  line-height: 1.6em;
+}
+
+.site-header {
+  text-transform: uppercase;
+  border-top: 5px solid #333;
+  border-bottom: 1px solid #f0f0f0;
+  line-height: 45px;
+}
+
+.container {
+  margin: 0 auto;
+  max-width: 38rem;
+}
+
+.site-logo {
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 700;
+  font-style: italic;
+  color: #111;
+}
+
+.site-logo:hover {
+  text-decoration: underline;
+}
+
+.site-nav {
+  float: right;
+}
+
+.site-nav a {
+  color: #111111;
+  text-decoration: none;
+  padding: 10px;
+}
+
+.site-nav a:hover {
+  text-decoration: underline;
+}
+
+@media print{
+  body{
+    max-width: none;
+  }
+}
