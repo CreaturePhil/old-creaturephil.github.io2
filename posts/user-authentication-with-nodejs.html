@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>User Authentication with Node.js</title>
+    <meta name="description" content="Writings and projects by Philip La. Philip La often goes by the username CreaturePhil and likes creating software.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="twitter:site" content="@CreaturePhil">
+
+    <link href="https://fonts.googleapis.com/css?family=Libre+Baskerville|Open+Sans" rel="stylesheet">
+    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/github.min.css">
+  </head>
+  <body>
+
+    <header class="site-header">
+      <div class="container">
+        <a href="/" class="site-logo">Philip La</a>
+        <nav class="site-nav">
+          <a href="/about">About</a>
+          <a href="/">Posts</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="site-post">
+      <p class="post-date">January 24, 2017</p>
+      <h2 class="post-title">User Authentication with Node.js</h2>
+
+      <p>
+      ﻿Dealing with authentication can be a pain to implement. I will go over how to implement user authentication with a username and password for a website. We will use
+      <a href="https://nodejs.org/en/" target="_blank" class="post-link">Node.js</a> as the server backend.
+      </p>
+
+      <p>
+      Starting off with an HTML form which allows for interaction between the client (your browser) and the server by allowing the user to send data through requests to the server. There are two input fields: username and password. The username and password data will be sent to the server. When a user presses enter or clicks submit on the form, the client sends a POST request method to the server.
+      </p>
+
+      <p>
+      But what is a POST request method? HTTP (Hypertext Transfer Protocol) allows for communication between the client and server. HTTP defines methods to show an action being performed. Two common HTTP methods are GET and POST. The GET method "gets," or requests, a resource from the server such as a web page or a file. The POST method sends data to the server. For example, when you log in, upload a file, or post a comment to a website.
+      </p>
+
+      <pre><code class="html">
+      &lt;form method=&quot;POST&quot; action=&quot;/register&quot;&gt;
+        &lt;input type=&quot;text&quot; name=&quot;username&quot; placeholder=&quot;Username&quot; /&gt;
+        &lt;input type=&quot;password&quot; name=&quot;password&quot; placeholder=&quot;Password&quot; /&gt;
+        &lt;input type=&quot;submit&quot; value=&quot;Register&quot; /&gt;
+      &lt;/form&gt;
+      </code></pre>
+
+      <p>
+      There are two attributes on this form: methods and action. The method attribute defines what HTTP request method to use, and the action states what URL the data should go to.
+      </p>
+
+      <p>
+      When the POST request method is sent, the server handles this by validating the user data and saving the data to a database. We will use the
+      <a href="https://www.npmjs.com/package/express" target="_blank" class="post-link">express</a> web framework for the server side, or backend. In addition, using the
+      <a href="https://www.npmjs.com/package/body-parser" target="_blank" class="post-link">body-parser</a> module to convert the incoming data to an easy to use JavaScript Object and we will use the database,
+      <a href="https://www.npmjs.com/package/nef" target="_blank" class="post-link">nef</a>, to more easily store our data locally.
+      </p>
+
+      <pre><code class="javascript">
+      // app.js
+      const bodyParser = require('body-parser');
+      const express = require('express');
+      const nef = require('nef');
+      const nef-fs = require('nef-fs');
+
+      const db = nef(nefFs('db'));
+
+      const app = express();
+
+      app.use(bodyParser.json()); // handle json data
+      app.use(bodyParser.urlencoded({ extended: true })); // handle URL-encoded data
+
+      // handle routes
+
+      // req stands for request
+      // res stands for response
+
+      // send html file. need __dirname for the correct path to the file
+      app.get('/register', (req, res) => res.sendFile(__dirname + '/register.html');
+
+      app.post('/register', (req, res) => {
+        if (!req.body.username || !req.body.password)
+          return res.json({error: 'No username or password.'});
+        if (req.body.uername.length > 19 || req.body.password.length > 150)
+          return res.json({error: 'Username or password is too long.'});
+        if (db.users.get(req.body.username))
+          return res.json({error: 'Someone has already registered this username.'});
+
+        // handle saving the user data
+      });
+      </code></pre>
+
+      <p>
+      Now, we don't want to save the password in plain text. This is because if someone hacks your database, then all your user's password gets leaked. Instead, hashing passwords is a better solution. Hashing means we turn text into some other text. Using a random key (the key can be anything like a string or number), we can make that text unrelated to a password. So a hacker would need to figure out the key and how the hashing functions work to figure out what the password is. The hashing function we will use is
+      <a href="https://www.npmjs.com/package/bcrypt-nodejs" target="_blank" class="post-link">bcrypt</a>.
+      </p>
+
+      <pre><code class="javascript">
+      // at the top of app.js
+      const bcrypt = require('bcrypt-nodejs');
+
+      // down at the register post function
+      app.post('/register', (req, res) => {
+        if (!req.body.username || !req.body.password)
+          return res.json({error: 'No username or password.'});
+        if (req.body.uername.length > 19 || req.body.password.length > 150)
+          return res.json({error: 'Username or password is too long.'});
+        if (db.users.get(req.body.username))
+          return res.json({error: 'Someone has already registered this username.'});
+
+        // handle saving the user data
+        // the number 10 here means the number of rounds or iterations the hash
+        // algorithm goes there. The higher means more secure but is slower
+        bcrypt.genSalt(10, (err, salt) => {
+          if (err) return res.json({error: 'Salt failed.'});
+          bcrypt.hash(req.body.password, salt, null, (err, hash) => {
+            if (err) return res.json({error: 'Hash failed.'});
+            db.users.set(userId, {username, hash});
+            // let the user know this have been successfully register!
+          });
+        });
+      });
+      </code></pre>
+
+      <p>
+      If the user has a valid username and password, they will have their passwords hash and save to the database. But how do we let the user know they are successfully registered and how do we keep track of this registration?
+      </p>
+
+      <p>
+      There are many ways to handle this. We will talk about sessions and JSON Web Tokens.
+      </p>
+
+      <p>
+      HTTP is stateless, meaning it doesn't keep track of data between the client and server. So HTTP has no way of telling if one request is from an authenticated user and from an unauthenticated one. To get around this, we can store the data on the server side and each request we send back the associated data or an id with a particular user or client. To implement sessions in Node.js, you can use
+      <a href="http://passportjs.org/" target="_blank" class="post-link">passport.js</a> and example usage of it can be found in my
+      <a href="https://github.com/CreaturePhil/effusive/blob/master/app/controllers/authentication_controller.js" target="_blank" class="post-link">effusive</a> project.
+      </p>
+
+      <p>
+      JSON Web Tokens, or JWT, is a long string of characters that is cryptographically signed. Here is what a JSON Web Token looks like:
+      </p>
+
+      <pre><code>
+      eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IkNyZWF0dXJlUGhpbCIsInVzZXJJZCI6ImNhwIjoxNDg1MTI5MzExfQ.C4ublD1e7I6U_L-iirqkXTuNwDRSTFgKH-Uw_RXxsGs
+      </code></pre>
+
+      <p>
+      Each dot separates a part of the JSON Web Token. The first part is the header containing what hashing algorithm is used, next is the payload which has the actual data we want transmitted inside with the JSON web token, and last, the signature which has a hash of the header, payload, and secret.
+      </p>
+
+      <p>
+      Using the <a href="https://www.npmjs.com/package/jsonwebtoken" target="_blank" class="post-link">jsonwebtoken</a> module, we can quickly use and manipulate JWTs. We will send it to the client and save it to localStorage.
+      </p>
+
+      <pre><code class="javascript">
+      app.post('/register', (req, res) => {
+        if (!req.body.username || !req.body.password)
+          return res.json({error: 'No username or password.'});
+        if (req.body.uername.length > 19 || req.body.password.length > 150)
+          return res.json({error: 'Username or password is too long.'});
+        if (db.users.get(req.body.username))
+          return res.json({error: 'Someone has already registered this username.'});
+
+        // handle saving the user data
+        // the number 10 here means the number of rounds or iterations the hash
+        // algorithm goes there. The higher means more secure but is slower
+        bcrypt.genSalt(10, (err, salt) => {
+          if (err) return res.json({error: 'Salt failed.'});
+          bcrypt.hash(req.body.password, salt, null, (err, hash) => {
+            if (err) return res.json({error: 'Hash failed.'});
+            db.users.set(userId, {username, hash});
+
+            const token = jwt.sign({username}, 'jwt secret token! can be anything', {expiresIn: '1d'});
+            res.json({token});
+          });
+        });
+      });
+      </code></pre>
+
+      <p>
+      On the client, we are going to use AJAX which stands for asynchronous JavaScript. Asynchronous means it can happen at any time and at the same time of something else, it doesn't interfere with what's happening on the web page. We will use the
+      <a href="https://www.npmjs.com/package/axios" target="_blank" class="post-link">axios</a> module to do HTTP requests much easier in JavaScript. Also, we will update the form in index.html with ids to more easily query them from the DOM.
+      </p>
+
+      <pre><code class="html">
+      &lt;!-- register.html --&gt;
+      &lt;form method=&quot;POST&quot; action=&quot;/register&quot; id=&quot;form&quot;&gt;
+           &lt;input type=&quot;text&quot; name=&quot;username&quot; placeholder=&quot;Username&quot; id=&quot;username&quot; /&gt;
+           &lt;input type=&quot;password&quot; name=&quot;password&quot; placeholder=&quot;Password&quot; id=&quot;password&quot; /&gt;
+           &lt;input type=&quot;submit&quot; value=&quot;Register&quot; /&gt;
+      &lt;/form&gt;
+
+      &lt;script src=&quot;https://unpkg.com/axios/dist/axios.min.js&quot;&gt;&lt;/script&gt;
+      </code></pre>
+
+      <p>
+      We will use AJAX to handle the client side when authenticating. We get the form elements and then when we submit the form, we use axios to make an HTTP POST request method to /register route on the server. We pass the username and password as data and on the response. If it is successful we then save the token and clear the input fields.
+      </p>
+
+      <pre><code class="javascript">
+      // client.js
+      var form = document.getElementById('form');
+      var username = document.getElementById('username');
+      var password = document.getElementById('password');
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        axios.post('/register', {
+          username: username,
+          password: password
+        })
+        .then(function (response) {
+          if (response.data.token) {
+            localStorage.setItem('token', response.data.token);
+
+            username.value = '';
+            password.value = '';
+            console.log('Successful registration!');
+            // do whatever here now like redirecting the page
+          } else {
+            console.error(response.data.error);
+          }
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+      });
+      </code></pre>
+
+      <p>
+      For logging in, on the server we get the inputted password and compare it to the corresponding username's hash to see if it is correct password.
+      </p>
+
+      <pre><code class="javascript">
+      // app.js
+      app.get('/login', (req, res) => res.sendFile('login.html'));
+      app.post('/login', (req, res) => {
+        if (!req.body.username || !req.body.password)
+          return res.json({error: 'No username or password.'});
+        if (req.body.uername.length > 19 || req.body.password.length > 150)
+          return res.json({error: 'Username or password is too long.'});
+        if (!db.users.get(req.body.username))
+          return res.json({error: 'Username is not registered.'});
+
+
+        const hash = db.users.get(req.body.username).hash;
+        bcrypt.compare(req.body.password, hash, (err, isMatch) => {
+          if (err) return res.json({error: 'Compare failed.'});
+          if (!isMatch) return res.json({error: 'Invalid password.'});
+          const token = jwt.sign({username}, 'jwt secret token! can be anything', {expiresIn: '1d'});
+          res.json({token});
+        });
+      });
+      </code></pre>
+
+      <p>
+      What about checking permissions to see if the user is logged in or registered? We can have an /auth route for this validation check to see if the user is authenticated.
+      </p>
+
+      <pre><code class="javascript">
+      app.post('/auth', (req, res) => {
+        if (!req.body.token) return res.json({error: 'No token.'});
+        jwt.verify(req.body.token, 'jwt secret token! can be anything', (err, decoded) => {
+          if (err || !decoded.username) return res.json({error: 'Invalid token.'});
+          res.json({username: decoded.username});
+        });
+      });
+      </code></pre>
+
+      <p>
+      That is basically how user authentication is implemented in Node.js. We have registration, login, and authentication check/validation.
+      </p>
+
+      <p>
+      What about security aspects of validation? There are many security vulnerabilities when you add authentication to your application like cross site request forgery (CSRF), SQL/noSQL injection attacks, and much more. For node.js, I recommend modules like
+      <a href="https://www.npmjs.com/package/lusca" target="_blank" class="post-link">lusca</a> and
+      <a href="https://www.npmjs.com/package/helmet" target="_blank" class="post-link">helmet</a> which helps you safeguard your application from the most common security vulnerabilities.
+      </p>
+
+      <p>
+      Also, it is recommended that you send your data through encrypted (secure) communications so no third party can view your user's private information.
+      <a href="https://letsencrypt.org/" target="_blank" class="post-link">Let's Encrypt</a> is a free way to get HTTPS to your site.
+      </p>
+
+      <p>
+      What about implementing user authentication with web sockets and you can't use secure web sockets? Well, you need to at least be able to send a request with private information through secure encryption so a third party can't view your sensitive data.
+      </p>
+
+      <p>
+      For my zoa app, the authentication works by the user sends a HTTPS POST request to the server with their username and password. This can be on the /register or /login route. The server generates a token (JSON web token) and sends it back to the client for them to save in localStorage. In addition, the server saves a token cache called auths which confirms this user has been authenticated by logging in, registering, or having a token. Auths is a cache and therefore reset after a server restart. When the user wants to be added by a web socket, they send a WebSocket request with their username and the server checks the database if they are in auths.
+      </p>
+
+      <p>
+      If a user already has a token from their previous session, then the user sends an HTTPS POST request to /auth route with that token. The server verifies that the token is valid and saves it to auths.
+      </p>
+
+      <p>
+      When a user logouts or changes names, they are deleted from auths.
+      </p>
+
+      <p>
+      If a malicious user checks or tries to send an username via sockets to the server, it will fail because the server checks the database and if no one has logged in yet, then the attempt is denied. In addition, if the auth user logs out or switches names, they will be removed from auths. If the auth user is on the server, the server will deny anyone else trying to authenticate themselves as the auth user.
+      </p>
+
+      <div id="disqus_thread"></div>
+    </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+      (function() {
+      var d = document, s = d.createElement('script');
+      s.src = '//creaturephil-1.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+      })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </body>
+</html>
