@@ -155,3 +155,16 @@ h4 {
     max-width: none;
   }
 }
+
+@media (max-width: 40rem) {
+  html { font-size: 90%; }
+  .site-header { padding: 0 1em; }
+  .site-hero { height: 50vh; }
+  .site-intro { padding: 0 1em; }
+  .container { padding: 0 1em; }
+  .site-posts span {
+    display: block;
+    float: none;
+  }
+  .site-post { padding: 0 1em; }
+}
