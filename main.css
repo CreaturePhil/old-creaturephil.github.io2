@@ -159,7 +159,7 @@ h4 {
 @media (max-width: 40rem) {
   html { font-size: 90%; }
   .site-header { padding: 0 1em; }
-  .site-hero { height: 50vh; }
+  .site-hero { height: 40vh; }
   .site-intro { padding: 0 1em; }
   .container { padding: 0 1em; }
   .site-posts span {
