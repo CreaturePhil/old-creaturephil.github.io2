@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Exploring Oh Composable World!</title>
+    <meta name="description" content="Writings and projects by Philip La. Philip La often goes by the username CreaturePhil and likes creating software.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="twitter:site" content="@CreaturePhil">
+
+    <link href="https://fonts.googleapis.com/css?family=Libre+Baskerville|Open+Sans" rel="stylesheet">
+    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/github.min.css">
+  </head>
+  <body>
+
+    <header class="site-header">
+      <div class="container">
+        <a href="/" class="site-logo">Philip La</a>
+        <nav class="site-nav">
+          <a href="/about">About</a>
+          <a href="/">Posts</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="site-post">
+      <p class="post-date">February 2, 2017</p>
+      <h2 class="post-title">Exploring Oh Composable World!</h2>
+
+      <p>
+      ﻿Composability in the context of functional programming has the benefits of better comprehension  of the codebase and allows for easier scaling from a small codebase to a larger one. Brian Lonsdorf has been advocating the functional programming paradigm and teaching people functional programming. He wrote a book on functional programming with JavaScript called
+      <a href="https://github.com/MostlyAdequate/mostly-adequate-guide" target="_blank" class="post-link">Professor Frisby’s Mostly Adequate Guide to functional programming</a> and he has a course on egghead called
+      <a href="https://egghead.io/courses/professor-frisby-introduces-function-composition" target="_blank" class="post-link">Professor Frisby Introduces Composable Functional JavaScript</a>. You should check those resources out. I’ll be exploring the crazy fun dot-chained react app that Brian covered in his talk called
+      <a href="https://www.youtube.com/watch?v=SfWR3dKnFIo" target="_blank" class="post-link">Oh, Composable World</a> at React conf. I’ll be exploring the composable react application by first breaking it down with diagrams, then with referential transparency, and finally with types.
+      </p>
+
+      <p>
+      I will go over a brief overview of functional programming, JSX, and React. Functional programming is a paradigm where you build up the structure of a program with evaluating the results of mathematical functions. JSX is a syntax extension to JavaScript and allows HTML tags to be used in JavaScript. React is a user interface JavaScript library that uses JSX and can be used very effectively with functional programming.
+      </p>
+
+      <p>
+      We have some component that takes an argument or property that can take any type and returns some JSX.
+      </p>
+
+      <pre><code class="javascript">
+      const ProfileLink = user =>
+        &lt;a href={`/users/${user.id}`}&gt;{user.name}&lt;/a&gt;
+      </code></pre>
+      <pre><code class="javascript">
+      const Heading = str =>
+        &lt;h1&gt;Now Viewing {str}&lt;/h1&gt;
+      </code></pre>
+
+      <p>
+      Then we are going to wrap it in a “box” so we can compose it in our application. We want to compose it because it allows us to more easily reason about our application as it grows in size. The following is a function or “box” that takes a component, g, and returns an Object that has “methods” we can use to chain it for composition. We are going to call this “box”, Comp.
+      </p>
+
+      <pre><code class="javascript">
+      const Comp = g =>
+      ({
+        fold: g,
+        contramap: f =>
+          Comp(x => g(f(x))),
+        concat: other =>
+          Comp(x =&gt; &lt;div&gt;{g(x)} {other.fold(x)}&lt;/div&gt;)
+      })
+      </code></pre>
+
+      <p>Now lets setup our first Comp called Title.</p>
+
+      <pre><code class="javascript">
+      const Title = Comp(Heading).contramap(s => s.pageName)
+      </code></pre>
+
+      <p>
+      So we wrap our Heading in Comp which allows us to contramap over it. Contramap means it maps the opposite. Instead of mapping over the return value, we map over the argument of the Component. Let’s see it in this diagram.
+      </p>
+
+      <img src="/images/composable_diagram.png" alt="Composable Diagram">
+
+      <p>
+      [1] Heading is a function that is passed to Comp as the parameter g.
+      </p>
+
+      <p>
+      [2] <code>s => s.pageName</code> is an anonymous function that is pass to contramap as the parameter f.
+      </p>
+
+      <p>
+      [3] We compose the functions g and f. We called f which gives us the string, pageName, from the object called s. Then called g passing in the pageName as the parameter which g outputs JSX,
+      <code>&lt;h1&gt;Now viewing {str}&lt;/h1&gt;</code> with str being the pageName.
+      </p>
+
+      <p>
+      [4] We pass back an anonymous function to Comp, <code>x => g(f(x))</code>.
+      </p>
+
+      <p>None of these gets run until we called the function fold. What we are doing is building up this computation and we can run all sorts of functions on it. </p>
+
+      <p>What do you think will happen when we called fold?</p>
+
+      <pre><code class="javascript">
+      Title.fold({ pageName: 'Home '})
+      </code></pre>
+
+      <p>
+      Referential transparency is where we can replace an expression with a corresponding value without changing the program's behavior. This allows us to more easily reason about our program. We will use it to evaluate when calling the fold function on the Title component.
+      </p>
+
+      <p>
+      <code>Title.fold({ pageName: 'Home '})</code> evaluate or breaks down to <code>g({pageName: 'Home'})</code>.
+      <code>g({pageName: 'Home'})</code> beaks down to <code>({pageName: 'Home'}) => g(f(x))</code> since g is <code>x => g(f(x))</code>
+      where that g inside the anonymous function is a different function that is Heading. This happens until we evaluate it to a value. Here is the whole process:
+      </p>
+
+      <pre><code class="javascript">
+      Title.fold({ pageName: 'Home '})
+      g({pageName: 'Home'})
+      ({pageName: 'Home'}) => g(f(x))
+      Heading( (s => s.pageName)({pageName: 'Home'}) )
+      Heading('Home')
+      (str =&gt; &lt;h1&gt; Now Viewing {str}&lt;/h1&gt;)(&#39;Home&#39;)
+      &lt;h1&gt;Now Viewing Home&lt;/h1&gt;
+      </code></pre>
+
+      <p>
+      The function g being Heading and the f being the anonymous functions <code>s => s.pageName</code>, we call f which gets the pageName from the object. The pageName is string Home. Then we called the Heading function. We end up with a h1 tag with the text being “Now Viewing Home”.
+      </p>
+
+      <p>
+      Now let's look at the types of these functions. Read <code>::</code> as “has type of”.
+      </p>
+
+      <pre><code class="python">
+      // Comp :: (a -> JSX) -> Object
+      </code></pre>
+
+      <p>
+      Here Comp has type of a function that takes any polymorphic parameter a to JSX and returns an object. Let's go through the types.
+      </p>
+
+      <pre><code class="ruby">
+      // Heading :: String -> JSX
+      // let f = s => s.pageName :: Object -> String
+      // let g = Heading :: String -> JSX
+      // let g' = x => g(f(x)) :: Object -> Comp
+      // intermediate process: g . f :: Object -> String -> JSX
+      // g . f :: Object -> JSX
+      </code></pre>
+
+      <p>
+      So following the types, we end up with JSX. As looking at it from a whole, we take an object and return JSX. The g’ or g prime denote the new function g that is passed into Comp. <code>g . f</code> means we are composing g and f as the dot (.) is the composition operator.
+      </p>
+
+      <p>
+      The following code, we create a link component mapping the input to get the current user. Try this process on your own to see what it evaluate to when you called fold on an object with currentUser having its name be your own name.
+      </p>
+
+      <pre><code>
+      // ProfileLink :: Object -> JSX
+      const ProfileLink = user =>
+        &lt;a href={`/users/${user.id}`}&gt;{user.name}&lt;/a&gt;
+
+      // Link :: Comp
+      const Link = Comp(ProfileLink).contramap(s => s.currentUser)
+
+      Link.fold({currentUser: {name: 'Your name here!'}, id: 10}) // what do you think this evaluate to?
+      </code></pre>
+
+      <p>
+      Drawing diagrams, using referential transparency, types, or all of them can help you reason about the above code.
+      For the above example, Link.fold evaluates to <code>&lt;a href=”/users/10”&gt;Your name here!&lt;/a&gt;</code>.
+      </p>
+
+      <p>
+      Next, the function concat lets us add two components to one another. They become adjacent elements to one another inside a div tag. You can think of concat as appending an item to a list.
+      </p>
+
+      <pre><code class="python">
+      const App = Title.concat(Link)
+      // App.fold({pageName: 'Home', currentUser: {name: 'Your name here!', id: 10})
+      // this results in:
+      // &lt;div&gt;
+      //   &lt;h1&gt;Now viewing home&lt;/h1&gt;
+      //   &lt;a href={`/users/10`}&gt;your name here!&lt;/a&gt;
+      // &lt;/div&gt;
+      </code></pre>
+
+      <p>The Title and Link are concatenated together to form a new component. This results in component composition and you can add an infinite amount of components together.</p>
+
+      <p>
+      The Reducer function has this type <code>(a, b) -> a</code>. Where a here represents the state and b represents an action. This is reducers in
+      <a href="http://redux.js.org/docs/basics/Reducers.html" target="_blank" class="post-link">redux<a>.
+      </p>
+
+      <pre><code class="javascript">
+      const Reducer = g =>
+      ({
+        fold: g,
+        contramap: f =>
+        Reducer((acc, x) => g(acc, f(x))),
+        map: f =>
+        Reducer((acc, x) => f(g(acc, x))),
+        concat: o =>
+        Reducer((acc, x) => o.fold(g(acc, x), x))
+      })
+
+      const r = Reducer((acc, x) => acc.concat(x))
+        .contramap(x => `The number is ${x}`)
+        .map(x => x + '! ')
+
+      console.log([1,2,3].reduce(r.fold, '')) // The number is 1! The number is 2! The number is 3!
+      </code></pre>
+
+      <p>
+      Contramap runs on each element before applying the reducer. Map runs on the accumulator after applying the reducer. Concat is basically combining reducers, the
+      <a href="http://redux.js.org/docs/api/combineReducers.html" target="_blank" class="post-link">combineReducer</a> function in redux. The following is where I run through referential transparency on the reducer.
+      </p>
+
+      <pre><code class="python">
+      // Reducer((acc, x) => acc.concat(x))
+      // g = (acc, x) => acc.concat(x)
+
+      // contramap calls f(x) and puts it pack as the 2nd argument to g
+      // contramap:
+      // f = x => `The number is ${x}`
+      // return: Reducer((acc, x) => g(acc, f(x)))
+      // g(acc, f(x)) = ((acc, x) => acc.concat(x))(acc, (x => `The number is ${x}`)(x))
+      // new g = (acc, x) => ((acc, x) => acc.concat(x))(acc, (x => `The number is ${x}`)(x))
+
+      // map calls g and pass it to f
+      // map:
+      // f = x => x + '!'
+      // return: Reducer((acc, x) => f(g(acc, x)))
+      // g(acc, x) = ((acc, x) => ((acc, x) => acc.concat(x))(acc, (x => `The number is ${x}`)(x)))(acc, x)
+      // f = (x => x + '!')((acc, x) => ((acc, x) => acc.concat(x))(acc, (x => `The number is ${x}`)(x)))(acc, x)
+      // new g is (acc, x) => f(g(acc, x)) or
+      // (acc, x) => (x => x + '!')((acc, x) => ((acc, x) => acc.concat(x))(acc, (x => `The number is ${x}`)(x)))(acc, x)
+
+      console.log([1,2,3].reduce(r.fold, ''))
+      // calling fold
+      // g = (acc, x) => (x => x + '!')((acc, x) => ((acc, x) => acc.concat(x))(acc, (x => `The number is ${x}`)(x)))(acc, x)
+      // g('', 1) where acc = '' and x = 1
+      // contramap: The number is 1
+      // pass it back to the (acc, x) => acc.concat
+      // The number is 1
+      // map: The number is 1!
+      // The number is 1!
+      // The number is 1! The number is 2! The number is 3!
+      </code></pre>
+
+      <p>What is the difference between the following code? What’s the difference between the output?</p>
+
+      <pre><code class="python">
+      const r1 = Reducer((acc, x) => acc.concat(x))
+        .map(x => `The number is ${x}`)
+        .map(x => x + '! ')
+      console.log([1,2,3].reduce(r1.fold, ''))
+
+      const r2 = Reducer((acc, x) => acc.concat(x))
+        .map(x => x + '! ')
+        .contramap(x => `The number is ${x}`)
+      console.log([1,2,3].reduce(r2.fold, ''))
+      </code></pre>
+
+      <p>
+      The final
+      <a href="https://jsfiddle.net/cnsn8yk2/9/" target="_blank" class="post-link">composed application</a> comprise using higher order components and an isomorphism. Higher order components are components that take a component as an argument. This is similar to higher order functions that can take a function as an argument. We are using a higher order component to encapsulate and handle state for us. This, however, returns a class as a component and that's where an isomorphism comes in. An isomorphism is where you can convert from one type to another and in our case we are converting a class to a function component. Play with the
+      <a href="https://jsfiddle.net/cnsn8yk2/9/" target="_blank" class="post-link">jsfidde</a> or use
+      <a href="https://github.com/facebookincubator/create-react-app" target="_blank" class="post-link">create-react-app</a> and paste this code
+      <a href="https://gist.github.com/CreaturePhil/41ff7a15cda2533a2d42f1e6344cbe7c" target="_blank" class="post-link">gist</a> in the <code>App.js</code> to see it in action.
+      </p>
+
+      <div id="disqus_thread"></div>
+    </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script>
+      (function() {
+      var d = document, s = d.createElement('script');
+      s.src = '//creaturephil-1.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+      })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  </body>
+</html>
