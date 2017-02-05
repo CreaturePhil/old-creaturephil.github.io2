@@ -11,7 +11,7 @@
 
     <link href="https://fonts.googleapis.com/css?family=Libre+Baskerville|Open+Sans" rel="stylesheet">
     <link rel="stylesheet" href="/main.css">
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/github.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/dracula.min.css">
   </head>
   <body>
 
@@ -133,7 +133,7 @@
       Now let's look at the types of these functions. Read <code>::</code> as “has type of”.
       </p>
 
-      <pre><code class="python">
+      <pre><code class="javascript">
       // Comp :: (a -> JSX) -> Object
       </code></pre>
 
@@ -178,7 +178,7 @@
       Next, the function concat lets us add two components to one another. They become adjacent elements to one another inside a div tag. You can think of concat as appending an item to a list.
       </p>
 
-      <pre><code class="python">
+      <pre><code class="javascript">
       const App = Title.concat(Link)
       // App.fold({pageName: 'Home', currentUser: {name: 'Your name here!', id: 10})
       // this results in:
@@ -219,7 +219,7 @@
       <a href="http://redux.js.org/docs/api/combineReducers.html" target="_blank" class="post-link">combineReducer</a> function in redux. The following is where I run through referential transparency on the reducer.
       </p>
 
-      <pre><code class="python">
+      <pre><code class="javascript">
       // Reducer((acc, x) => acc.concat(x))
       // g = (acc, x) => acc.concat(x)
 
@@ -253,7 +253,7 @@
 
       <p>What is the difference between the following code? What’s the difference between the output?</p>
 
-      <pre><code class="python">
+      <pre><code class="javascript">
       const r1 = Reducer((acc, x) => acc.concat(x))
         .map(x => `The number is ${x}`)
         .map(x => x + '! ')
